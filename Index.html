@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psikotes DISC Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .question-card {
+            transition: all 0.3s ease-in-out;
+            scroll-margin-top: 80px;
+        }
+        /* Custom radio button styles */
+        input[type="radio"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid #d1d5db;
+            border-radius: 50%;
+            display: grid;
+            place-content: center;
+        }
+        input[type="radio"]::before {
+            content: "";
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset(1em 1em #2563eb);
+            background-color: #2563eb;
+        }
+        input[type="radio"]:checked::before {
+            transform: scale(1);
+        }
+        .disabled-button {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="app" class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Halaman Depan: Data Diri -->
+        <section id="welcome-page" class="bg-white p-8 rounded-xl shadow-lg">
+            <h1 class="text-3xl font-bold text-center text-blue-600">Selamat Datang di Psikotes DISC</h1>
+            <p class="text-center text-gray-600 mt-2">Tes ini bertujuan untuk memahami preferensi gaya perilaku Anda.</p>
+            
+            <form id="data-diri-form" class="mt-8 space-y-6">
+                <div>
+                    <label for="fullName" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                    <input type="text" id="fullName" name="fullName" required class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="email" name="email" required class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="position" class="block text-sm font-medium text-gray-700">Posisi yang Dilamar</label>
+                    <input type="text" id="position" name="position" required class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div class="flex items-start mt-6">
+                    <div class="flex items-center h-5">
+                        <input id="consent" name="consent" type="checkbox" required class="focus:ring-blue-500 h-5 w-5 text-blue-600 border-gray-300 rounded">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="consent" class="font-medium text-gray-700">Persetujuan Kandidat</label>
+                        <p class="text-gray-500">Saya dengan ini setuju untuk mengikuti tes dan mengizinkan data serta hasil tes ini untuk disimpan dan dianalisis oleh tim rekrutmen. Saya memahami bahwa hasil ini bersifat rahasia dan tidak akan disebarluaskan.</p>
+                    </div>
+                </div>
+
+                <button id="start-test-btn" type="button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled-button" disabled>
+                    Mulai Tes
+                </button>
+            </form>
+        </section>
+
+        <!-- Halaman Tes -->
+        <section id="test-page" class="hidden">
+            <div class="bg-white p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-center text-blue-600">Instruksi Pengerjaan</h2>
+                <p class="text-center text-gray-600 mt-2">
+                    Pada setiap nomor, terdapat 4 pernyataan. Pilih satu pernyataan yang <b class="text-green-600">PALING (P)</b> menggambarkan diri Anda dan satu pernyataan yang <b class="text-red-600">KURANG (K)</b> menggambarkan diri Anda.
+                </p>
+                <p class="text-center text-sm mt-1 text-red-500 font-semibold">Pastikan setiap nomor memiliki tepat satu pilihan (P) dan satu pilihan (K).</p>
+            </div>
+            
+            <div id="test-questions" class="mt-6 space-y-6">
+                <!-- Soal akan di-generate oleh JavaScript di sini -->
+            </div>
+            
+            <div class="mt-8 flex justify-end">
+                <button id="submit-test-btn" class="w-full sm:w-auto py-3 px-8 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Selesai & Kirim Jawaban
+                </button>
+            </div>
+        </section>
+        
+        <!-- Halaman Loading -->
+        <section id="loading-page" class="hidden text-center bg-white p-8 rounded-xl shadow-lg">
+             <div class="flex justify-center items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold mt-4">Memproses Hasil Anda...</h2>
+            <p class="text-gray-600 mt-2">Mohon tunggu sebentar, kami sedang membuat laporan dan mengirimkannya.</p>
+        </section>
+
+        <!-- Halaman Selesai -->
+        <section id="finish-page" class="hidden text-center bg-white p-8 rounded-xl shadow-lg">
+            <h2 class="text-3xl font-bold text-green-600">Tes Selesai!</h2>
+            <p class="text-gray-600 mt-4 text-lg">Terima kasih telah menyelesaikan psikotes ini. Laporan hasil tes Anda telah berhasil dikirimkan ke tim rekrutmen.</p>
+            <p class="text-gray-500 mt-2">Anda dapat menutup halaman ini sekarang.</p>
+        </section>
+        
+        <!-- Halaman Error -->
+        <section id="error-page" class="hidden text-center bg-white p-8 rounded-xl shadow-lg">
+            <h2 class="text-3xl font-bold text-red-600">Terjadi Kesalahan</h2>
+            <p id="error-message" class="text-gray-600 mt-4 text-lg">Maaf, terjadi masalah saat mengirimkan jawaban Anda. Silakan coba lagi nanti atau hubungi tim rekrutmen.</p>
+        </section>
+
+    </div>
+
+    <script>
+        // ===================================================================================
+        // KONFIGURASI PENTING
+        // ===================================================================================
+        // URL ini sudah terhubung dengan Google Apps Script Anda.
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzCD9mcUFZ1X1lNKerdfdWu57ALp7JEE6gqp7b4mg3O5bCEtGLEeAdC9nexL4-mPwyctw/exec';
+
+        // ===================================================================================
+        // DATABASE SOAL DAN SKORING
+        // Data ini diambil dari file PDF dan Excel yang Anda berikan.
+        // ===================================================================================
+        
+        const questions = [
+            { id: 1, statements: ["Mudah bergaul, ramah, mudah setuju", "Mempercayai, percaya pada orang lain", "Petualang, suka mengambil resiko", "Penuh toleransi, menghormati orang lain"] },
+            { id: 2, statements: ["Menyemangati orang lain", "Pusat perhatian, bersosialisasi", "Pendamai, membawa ketenangan", "Lembut, tertutup"] },
+            { id: 3, statements: ["Suka bergaul, antusias", "Membeli karena dorongan hasrat", "Akan menunggu, tanpa tekanan", "Akan membeli apa yang diinginkan"] },
+            { id: 4, statements: ["Mudah ditebak, konsisten", "Waspada, berhati-hati", "Bersahabat, mudah bergaul", "Sulit dikalahkan/ditundukkan"] },
+            { id: 5, statements: ["Berusaha mencapai kesempurnaan", "Unik, bosan pada rutinitas", "Melaksanakan sesuai perintah, patuh", "Ingin segala sesuatu teratur, rapi"] },
+            { id: 6, statements: ["Baik hati", "Memiliki keberanian", "Menyenangkan", "Periang"] },
+            { id: 7, statements: ["Menolak perubahan yang mendadak", "Cenderung terlalu banyak berjanji", "Mundur apabila berada di bawah tekanan", "Tidak takut untuk berkelahi"] },
+            { id: 8, statements: ["Penyemangat/pendukung yang baik", "Pendengar yang baik", "Penganalisa yang baik", "Pendelegasi yang baik/pandai membagi tugas"] },
+            { id: 9, statements: ["Yang penting adalah hasil", "Kerjakan dengan benar, ketepatan sangat penting", "Buat agar menyenangkan", "Kerjakan bersama-sama"] },
+            { id: 10, statements: ["Puas dengan keadaan, tenang", "Visionary/pandangan ke masa depan", "Mengambil kendali, bersikap langsung", "Sistematis, berpikir logis"] },
+            { id: 11, statements: ["Mengelola waktu dengan efisien", "Sering terburu-buru, merasa ditekan", "Hal-hal sosial adalah penting", "Suka menyelesaikan hal yang sudah dimulai"] },
+            { id: 12, statements: ["Gembira, bebas, riang", "Menyenangkan, baik hati", "Menyolok, berani", "Tenang, pendiam, tertutup"] },
+            { id: 13, statements: ["Ingin kemajuan/peningkatan", "Puas dengan keadaan, tenang/mudah puas", "Menunjukkan perasaan dengan terbuka", "Berusaha patuh pada peraturan"] },
+            { id: 14, statements: ["Pendidikan, kebudayaan", "Prestasi, penghargaan", "Keselamatan, keamanan", "Sosial, pertemuan kelompok"] },
+            { id: 15, statements: ["Rendah hati, sederhana", "Menyediakan waktu untuk orang lain", "Merencanakan masa depan, bersiap-siap", "Menuju petualangan baru"] },
+            { id: 16, statements: ["Menerima penghargaan atas pencapaian target", "Peraturan perlu diuji", "Peraturan membuat menjadi adil", "Peraturan membuat menjadi membosankan"] },
+            { id: 17, statements: ["Saya akan mendapatkan fakta-faktanya", "Memikirkan orang lain dahulu", "Suka bersaing/kompetitif", "Optimis, berpikir positif"] },
+            { id: 18, statements: ["Suka tantangan", "Menyenangkan orang lain, ramah, penurut", "Tertawa lepas, hidup", "Pemberani, tegas"] },
+            { id: 19, statements: ["Pendiam, tertutup, tenang", "Ingin wewenang/kekuasaan lebih", "Ingin kesempatan baru", "Menghindari konflik"] },
+            { id: 20, statements: ["Akan memegang teguh standar yang tinggi", "Puas dengan apa yang dimiliki", "Humoris, suka melucu", "Ingin berpartisipasi dalam kelompok"] },
+            { id: 21, statements: ["Akan menunjukkan siapa yang menjadi pimpinan", "Suka bergaul dengan orang lain", "Ingin mempertahankan hubungan yang ada", "Akan patuh pada peraturan"] },
+            { id: 22, statements: ["Berpikir logis", "Penuh keyakinan", "Penuh perasaan", "Akan berkorban demi orang lain"] },
+            { id: 23, statements: ["Mudah beradaptasi, mudah menyesuaikan diri", "Penuh semangat, bergairah", "Berpendirian kuat", "Tenang, pendiam"] },
+            { id: 24, statements: ["Menjadi frustasi", "Menjadi pendiam, tertutup", "Menjadi marah, panas hati", "Menjadi cemas"] }
+        ];
+
+        const scoringMap = {
+            1: { P: {1: 'S', 2: 'I', 3: 'D', 4: 'S'}, K: {1: 'S', 2: 'I', 3: 'D', 4: 'S'}},
+            2: { P: {1: 'I', 2: 'I', 3: 'S', 4: 'S'}, K: {1: 'I', 2: 'I', 3: 'S', 4: 'S'}},
+            3: { P: {1: 'I', 2: 'I', 3: 'S', 4: 'D'}, K: {1: 'I', 2: 'I', 3: 'S', 4: 'D'}},
+            4: { P: {1: 'S', 2: 'C', 3: 'I', 4: 'D'}, K: {1: 'S', 2: 'C', 3: 'I', 4: 'D'}},
+            5: { P: {1: 'C', 2: 'I', 3: 'S', 4: 'C'}, K: {1: 'C', 2: 'I', 3: 'S', 4: 'C'}},
+            6: { P: {1: 'S', 2: 'D', 3: 'I', 4: 'I'}, K: {1: 'S', 2: 'D', 3: 'I', 4: 'I'}},
+            7: { P: {1: 'S', 2: 'I', 3: 'S', 4: 'D'}, K: {1: 'S', 2: 'I', 3: 'S', 4: 'D'}},
+            8: { P: {1: 'I', 2: 'S', 3: 'C', 4: 'D'}, K: {1: 'I', 2: 'S', 3: 'C', 4: 'D'}},
+            9: { P: {1: 'D', 2: 'C', 3: 'I', 4: 'S'}, K: {1: 'D', 2: 'C', 3: 'I', 4: 'S'}},
+            10: { P: {1: 'S', 2: 'I', 3: 'D', 4: 'C'}, K: {1: 'S', 2: 'I', 3: 'D', 4: 'C'}},
+            11: { P: {1: 'C', 2: 'D', 3: 'I', 4: 'S'}, K: {1: 'C', 2: 'D', 3: 'I', 4: 'S'}},
+            12: { P: {1: 'I', 2: 'S', 3: 'D', 4: 'C'}, K: {1: 'I', 2: 'S', 3: 'D', 4: 'C'}},
+            13: { P: {1: 'D', 2: 'S', 3: 'I', 4: 'C'}, K: {1: 'D', 2: 'S', 3: 'I', 4: 'C'}},
+            14: { P: {1: 'C', 2: 'D', 3: 'S', 4: 'I'}, K: {1: 'C', 2: 'D', 3: 'S', 4: 'I'}},
+            15: { P: {1: 'S', 2: 'S', 3: 'C', 4: 'I'}, K: {1: 'S', 2: 'S', 3: 'C', 4: 'I'}},
+            16: { P: {1: 'D', 2: 'D', 3: 'C', 4: 'I'}, K: {1: 'D', 2: 'D', 3: 'C', 4: 'I'}},
+            17: { P: {1: 'C', 2: 'S', 3: 'D', 4: 'I'}, K: {1: 'C', 2: 'S', 3: 'D', 4: 'I'}},
+            18: { P: {1: 'D', 2: 'S', 3: 'I', 4: 'D'}, K: {1: 'D', 2: 'S', 3: 'I', 4: 'D'}},
+            19: { P: {1: 'C', 2: 'D', 3: 'I', 4: 'S'}, K: {1: 'C', 2: 'D', 3: 'I', 4: 'S'}},
+            20: { P: {1: 'C', 2: 'S', 3: 'I', 4: 'S'}, K: {1: 'C', 2: 'S', 3: 'I', 4: 'S'}},
+            21: { P: {1: 'D', 2: 'I', 3: 'S', 4: 'C'}, K: {1: 'D', 2: 'I', 3: 'S', 4: 'C'}},
+            22: { P: {1: 'C', 2: 'I', 3: 'D', 4: 'S'}, K: {1: 'C', 2: 'I', 3: 'D', 4: 'S'}},
+            23: { P: {1: 'S', 2: 'I', 3: 'D', 4: 'C'}, K: {1: 'S', 2: 'I', 3: 'D', 4: 'C'}},
+            24: { P: {1: 'I', 2: 'S', 3: 'D', 4: 'C'}, K: {1: 'I', 2: 'S', 3: 'D', 4: 'C'}}
+        };
+        
+        const interpretations = {
+            'D': {
+                title: 'Dominance (Dominan)',
+                description: 'Individu dengan tipe Dominance tinggi adalah orang yang tegas, berorientasi pada hasil, dan kompetitif. Mereka suka mengambil alih, menghadapi tantangan, dan fokus pada tujuan. Mereka adalah pemecah masalah yang cepat dan pengambil keputusan yang berani.',
+                strengths: ['Tegas dan langsung (To the point)', 'Cepat membuat keputusan', 'Berani mengambil risiko dan menyukai perubahan', 'Berorientasi pada tugas dan hasil', 'Memiliki inisiatif tinggi'],
+                weaknesses: ['Kurang sabar dengan orang lain', 'Cenderung melanggar aturan jika dianggap menghambat', 'Kurang taktis dan diplomatis dalam berkomunikasi', 'Bisa terlihat menuntut atau agresif', 'Kurang memperhatikan hubungan interpersonal'],
+                environment: 'Lingkungan yang memberikan tantangan, kebebasan dari pengawasan ketat, kesempatan untuk maju, dan wewenang untuk mengambil keputusan.'
+            },
+            'I': {
+                title: 'Influence (Mempengaruhi)',
+                description: 'Tipe Influence adalah individu yang sosial, antusias, dan optimis. Mereka pandai berkomunikasi, persuasif, dan suka berkolaborasi. Mereka berkembang dalam lingkungan tim dan menikmati interaksi dengan orang lain. Energi positif mereka seringkali memotivasi orang di sekitar.',
+                strengths: ['Optimis dan antusias', 'Pandai berbicara dan persuasif', 'Kreatif dalam memecahkan masalah', 'Mampu memotivasi orang lain', 'Suka bekerja dalam tim dan membangun hubungan'],
+                weaknesses: ['Impulsif dan kurang terorganisir', 'Tidak memperhatikan detail', 'Terlalu mempercayai orang lain', 'Cenderung menghindari konflik', 'Bisa menjadi terlalu banyak bicara dan kurang mendengarkan'],
+                environment: 'Lingkungan kerja yang ramah dan bersahabat, memberikan pengakuan publik, kebebasan berekspresi, dan kesempatan untuk berinteraksi sosial.'
+            },
+            'S': {
+                title: 'Steadiness (Stabil)',
+                description: 'Orang dengan tipe Steadiness tinggi adalah individu yang sabar, dapat diandalkan, dan pendengar yang baik. Mereka tenang, loyal, dan suportif. Mereka menghargai stabilitas, keamanan, dan hubungan yang tulus. Mereka adalah pemain tim yang hebat dan bekerja dengan baik dalam lingkungan yang terprediksi.',
+                strengths: ['Sabar, tenang, dan dapat diandalkan', 'Pendengar yang baik dan empatik', 'Loyal dan pekerja keras', 'Mampu mendamaikan konflik', 'Suka membantu dan suportif'],
+                weaknesses: ['Tidak menyukai perubahan mendadak', 'Cenderung menghindari konfrontasi', 'Bisa ragu-ragu dalam mengambil keputusan', 'Terlalu akomodatif dan sulit berkata "tidak"', 'Membutuhkan waktu untuk beradaptasi dengan hal baru'],
+                environment: 'Lingkungan yang stabil, aman, dan dapat diprediksi. Menghargai kerja sama tim, hubungan yang harmonis, dan prosedur yang jelas.'
+            },
+            'C': {
+                title: 'Compliance (Patuh/Teliti)',
+                description: 'Tipe Compliance adalah individu yang akurat, analitis, dan sistematis. Mereka berorientasi pada detail, teliti, dan menghargai kualitas serta presisi. Mereka bekerja berdasarkan fakta dan logika, serta lebih suka bekerja dengan prosedur yang jelas untuk memastikan tidak ada kesalahan.',
+                strengths: ['Teliti dan berorientasi pada detail', 'Analitis dan berpikir logis', 'Menjaga standar kualitas yang tinggi', 'Sistematis dan terorganisir', 'Diplomatis dan bijaksana'],
+                weaknesses: ['Cenderung perfeksionis dan bisa terjebak dalam detail', 'Ragu-ragu dalam membuat keputusan tanpa data lengkap', 'Bisa menjadi defensif ketika dikritik', 'Kurang fleksibel dan kaku terhadap aturan', 'Cenderung menjaga jarak dan kurang terbuka secara emosional'],
+                environment: 'Lingkungan yang terstruktur, memberikan ekspektasi yang jelas, menghargai akurasi dan kualitas, serta memberikan waktu untuk berpikir analitis.'
+            }
+        };
+
+        // ===================================================================================
+        // LOGIKA APLIKASI
+        // ===================================================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const welcomePage = document.getElementById('welcome-page');
+            const testPage = document.getElementById('test-page');
+            const loadingPage = document.getElementById('loading-page');
+            const finishPage = document.getElementById('finish-page');
+            const errorPage = document.getElementById('error-page');
+            
+            const dataDiriForm = document.getElementById('data-diri-form');
+            const consentCheckbox = document.getElementById('consent');
+            const startTestBtn = document.getElementById('start-test-btn');
+            const submitTestBtn = document.getElementById('submit-test-btn');
+
+            function checkFormValidity() {
+                const isFormValid = dataDiriForm.checkValidity();
+                if (isFormValid) {
+                    startTestBtn.removeAttribute('disabled');
+                    startTestBtn.classList.remove('disabled-button');
+                } else {
+                    startTestBtn.setAttribute('disabled', 'true');
+                    startTestBtn.classList.add('disabled-button');
+                }
+            }
+
+            dataDiriForm.addEventListener('input', checkFormValidity);
+            consentCheckbox.addEventListener('change', checkFormValidity);
+
+            startTestBtn.addEventListener('click', () => {
+                if (dataDiriForm.checkValidity()) {
+                    welcomePage.classList.add('hidden');
+                    testPage.classList.remove('hidden');
+                    generateQuestions();
+                }
+            });
+
+            submitTestBtn.addEventListener('click', () => {
+                if(validateTest()) {
+                    processAndSubmit();
+                }
+            });
+
+            function generateQuestions() {
+                const container = document.getElementById('test-questions');
+                container.innerHTML = '';
+                questions.forEach((q, index) => {
+                    const statementsHTML = q.statements.map((stmt, i) => `
+                        <tr class="border-b">
+                            <td class="p-4">${stmt}</td>
+                            <td class="p-4 text-center">
+                                <input type="radio" name="p-q${q.id}" value="${i+1}" class="mx-auto">
+                            </td>
+                            <td class="p-4 text-center">
+                                <input type="radio" name="k-q${q.id}" value="${i+1}" class="mx-auto">
+                            </td>
+                        </tr>
+                    `).join('');
+
+                    const questionHTML = `
+                        <div id="card-q${q.id}" class="question-card bg-white p-6 rounded-xl shadow-lg">
+                            <p class="text-lg font-semibold">Nomor ${q.id}</p>
+                            <div class="mt-4 overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-gray-50 border-b">
+                                            <th class="p-4 font-semibold">Pernyataan</th>
+                                            <th class="p-4 w-24 text-center font-semibold text-green-600">Paling (P)</th>
+                                            <th class="p-4 w-24 text-center font-semibold text-red-600">Kurang (K)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${statementsHTML}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += questionHTML;
+                });
+            }
+
+            function validateTest() {
+                let allValid = true;
+                for (let i = 1; i <= questions.length; i++) {
+                    const pChoice = document.querySelector(`input[name="p-q${i}"]:checked`);
+                    const kChoice = document.querySelector(`input[name="k-q${i}"]:checked`);
+                    const card = document.getElementById(`card-q${i}`);
+                    
+                    card.classList.remove('border-2', 'border-red-500');
+
+                    if (!pChoice || !kChoice) {
+                        allValid = false;
+                        card.classList.add('border-2', 'border-red-500');
+                    } else if (pChoice.value === kChoice.value) {
+                         allValid = false;
+                        card.classList.add('border-2', 'border-red-500');
+                    }
+                }
+                if (!allValid) {
+                    alert('Validasi Gagal!\n\nPastikan setiap nomor memiliki tepat satu pilihan (P) dan satu pilihan (K), dan pilihan tidak boleh sama. Pertanyaan yang belum lengkap ditandai dengan kotak merah.');
+                    const firstError = document.querySelector('.border-red-500');
+                    if(firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+                return allValid;
+            }
+            
+            function processAndSubmit() {
+                testPage.classList.add('hidden');
+                loadingPage.classList.remove('hidden');
+
+                const answers = { most: {}, least: {} };
+                for (let i = 1; i <= questions.length; i++) {
+                    answers.most[i] = document.querySelector(`input[name="p-q${i}"]:checked`).value;
+                    answers.least[i] = document.querySelector(`input[name="k-q${i}"]:checked`).value;
+                }
+                
+                // Calculate scores
+                const scores = { most: { D: 0, I: 0, S: 0, C: 0 }, least: { D: 0, I: 0, S: 0, C: 0 } };
+                for (let i = 1; i <= questions.length; i++) {
+                    const mostChoice = answers.most[i];
+                    const leastChoice = answers.least[i];
+                    
+                    const mostType = scoringMap[i].P[mostChoice];
+                    if(mostType !== '*') scores.most[mostType]++;
+
+                    const leastType = scoringMap[i].K[leastChoice];
+                    if(leastType !== '*') scores.least[leastType]++;
+                }
+                
+                const changeScores = {
+                    D: scores.most.D - scores.least.D,
+                    I: scores.most.I - scores.least.I,
+                    S: scores.most.S - scores.least.S,
+                    C: scores.most.C - scores.least.C
+                };
+                
+                // Determine dominant profiles
+                const sortedProfiles = Object.entries(changeScores).sort(([,a],[,b]) => b-a);
+                const primaryProfile = sortedProfiles[0][0];
+                const secondaryProfile = sortedProfiles[1][0];
+
+                // Build interpretation text
+                const primaryData = interpretations[primaryProfile];
+                const secondaryData = interpretations[secondaryProfile];
+
+                let interpretationText = `
+                    HASIL INTERPRETASI PSIKOTES DISC\n
+                    ========================================\n
+                    PROFIL UTAMA: ${primaryData.title}\n
+                    ${primaryData.description}\n
+                    Kekuatan Utama:\n
+                    - ${primaryData.strengths.join('\n- ')}\n
+                    Area yang Perlu Diperhatikan:\n
+                    - ${primaryData.weaknesses.join('\n- ')}\n
+                    Lingkungan Kerja Ideal:\n
+                    ${primaryData.environment}\n
+                    ========================================\n
+                    PROFIL KEDUA: ${secondaryData.title}\n
+                    ${secondaryData.description}\n
+                    Kecenderungan dari profil kedua ini melengkapi dan memodifikasi profil utama Anda, memberikan nuansa tambahan pada gaya perilaku Anda secara keseluruhan.\n
+                `;
+
+                const formData = {
+                    fullName: document.getElementById('fullName').value,
+                    email: document.getElementById('email').value,
+                    position: document.getElementById('position').value,
+                    scores: {
+                        most: scores.most,
+                        least: scores.least,
+                        change: changeScores
+                    },
+                    interpretation: interpretationText,
+                    primaryProfile: primaryProfile,
+                    secondaryProfile: secondaryProfile
+                };
+
+                fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Penting untuk menghindari error CORS saat post ke Google Script
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                     // Karena mode 'no-cors', kita tidak bisa membaca response.
+                     // Jadi kita asumsikan berhasil dan lanjut ke halaman finish.
+                     loadingPage.classList.add('hidden');
+                     finishPage.classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingPage.classList.add('hidden');
+                    errorPage.classList.remove('hidden');
+                    document.getElementById('error-message').textContent = `Maaf, terjadi masalah: ${error}. Silakan hubungi tim rekrutmen.`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
