@@ -24,6 +24,7 @@
             border-radius: 50%;
             display: grid;
             place-content: center;
+            transition: all 0.2s;
         }
         input[type="radio"]::before {
             content: "";
@@ -37,6 +38,11 @@
         }
         input[type="radio"]:checked::before {
             transform: scale(1);
+        }
+        input[type="radio"]:disabled {
+            background-color: #f3f4f6;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
         }
         .disabled-button {
             cursor: not-allowed;
@@ -85,7 +91,7 @@
 
         <!-- Halaman Tes -->
         <section id="test-page" class="hidden">
-            <div class="bg-white p-8 rounded-xl shadow-lg">
+            <div class="bg-white p-8 rounded-xl shadow-lg sticky top-0 z-10">
                 <h2 class="text-2xl font-bold text-center text-blue-600">Instruksi Pengerjaan</h2>
                 <p class="text-center text-gray-600 mt-2">
                     Pada setiap nomor, terdapat 4 pernyataan. Pilih satu pernyataan yang <b class="text-green-600">PALING (P)</b> menggambarkan diri Anda dan satu pernyataan yang <b class="text-red-600">KURANG (K)</b> menggambarkan diri Anda.
@@ -243,6 +249,7 @@
             const consentCheckbox = document.getElementById('consent');
             const startTestBtn = document.getElementById('start-test-btn');
             const submitTestBtn = document.getElementById('submit-test-btn');
+            const testQuestionsContainer = document.getElementById('test-questions');
 
             function checkFormValidity() {
                 const isFormValid = dataDiriForm.checkValidity();
@@ -269,6 +276,49 @@
             submitTestBtn.addEventListener('click', () => {
                 if(validateTest()) {
                     processAndSubmit();
+                }
+            });
+
+            // *** PENAMBAHAN FITUR BARU ***
+            // Event listener untuk menangani auto-scroll dan menonaktifkan pilihan yang sama
+            testQuestionsContainer.addEventListener('change', (event) => {
+                const target = event.target;
+                if (target.type !== 'radio') return;
+
+                const name = target.name; // Contoh: "p-q1"
+                const value = target.value; // Contoh: "3"
+                const [type, qId] = name.split('-q'); // Hasil: ["p", "1"]
+
+                // 1. Logika untuk menonaktifkan pilihan yang berlawanan di baris yang sama
+                const oppositeType = type === 'p' ? 'k' : 'p';
+                const oppositeName = `${oppositeType}-q${qId}`;
+
+                // Aktifkan kembali semua radio di kolom berlawanan untuk pertanyaan ini
+                document.querySelectorAll(`input[name="${oppositeName}"]`).forEach(radio => {
+                    radio.disabled = false;
+                });
+
+                // Nonaktifkan radio spesifik di baris yang sama pada kolom berlawanan
+                const oppositeRadioToDisable = document.querySelector(`input[name="${oppositeName}"][value="${value}"]`);
+                if (oppositeRadioToDisable) {
+                    oppositeRadioToDisable.disabled = true;
+                }
+
+                // 2. Logika untuk auto-scroll jika nomor saat ini sudah lengkap
+                const pChoice = document.querySelector(`input[name="p-q${qId}"]:checked`);
+                const kChoice = document.querySelector(`input[name="k-q${qId}"]:checked`);
+
+                if (pChoice && kChoice) {
+                    const nextQuestionId = parseInt(qId) + 1;
+                    if (nextQuestionId <= questions.length) {
+                        const nextQuestionCard = document.getElementById(`card-q${nextQuestionId}`);
+                        if (nextQuestionCard) {
+                            // Diberi sedikit jeda agar terasa lebih mulus
+                            setTimeout(() => {
+                                nextQuestionCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 200);
+                        }
+                    }
                 }
             });
 
@@ -323,13 +373,13 @@
                     if (!pChoice || !kChoice) {
                         allValid = false;
                         card.classList.add('border-2', 'border-red-500');
-                    } else if (pChoice.value === kChoice.value) {
+                    } else if (pChoice.value === kChoice.value) { // Pengecekan ini sebenarnya sudah dicegah oleh fitur baru, tapi tetap bagus sebagai garda terakhir
                          allValid = false;
                         card.classList.add('border-2', 'border-red-500');
                     }
                 }
                 if (!allValid) {
-                    alert('Validasi Gagal!\n\nPastikan setiap nomor memiliki tepat satu pilihan (P) dan satu pilihan (K), dan pilihan tidak boleh sama. Pertanyaan yang belum lengkap ditandai dengan kotak merah.');
+                    alert('Validasi Gagal!\n\nPastikan setiap nomor memiliki tepat satu pilihan (P) dan satu pilihan (K). Pertanyaan yang belum lengkap ditandai dengan kotak merah.');
                     const firstError = document.querySelector('.border-red-500');
                     if(firstError) {
                         firstError.scrollIntoView({ behavior: 'smooth', block: 'start' });
